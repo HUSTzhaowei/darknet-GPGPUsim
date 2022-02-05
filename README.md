@@ -1,3 +1,11 @@
+# Darknet for GPGPUsim#
+To run darknet in GPGPUsim, I modify the code of the original darknet. 
+You can use make command to produce the "darknet" file, and put the dynamic and static library (i.e. libdarknet.a and libdarknet.so) of darknet in your GPGPUsim config directory. 
+
+# Modifications in GPGPUsim#
+Run the "darknet" file produced by this repo, the GPGPUsim has an error, and you can simplely comment out the line 3971 in instruction.cc.
+
+
 ![Darknet Logo](http://pjreddie.com/media/files/darknet-black-small.png)
 
 # Darknet #
