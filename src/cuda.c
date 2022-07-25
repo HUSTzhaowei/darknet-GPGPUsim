@@ -123,6 +123,20 @@ float *cuda_make_array(float *x, size_t n)
 //     check_error(cudaGetLastError());
 // }
 
+void cuda_random(float *x_gpu, size_t n){
+    // float num;
+    float *x_cpu;
+    x_cpu = (float *) malloc(4*n);
+    int N = 999;
+    srand(time(NULL));
+    int i;
+    for(i=0;i<n;i++){
+        x_cpu[i] = rand() % (N + 1) / (float)(N + 1);
+    }
+    cudaMemcpy(x_gpu, x_cpu, 4*n, cudaMemcpyHostToDevice);
+    free(x_cpu);
+}
+
 float cuda_compare(float *x_gpu, float *x, size_t n, char *s)
 {
     float *tmp = calloc(n, sizeof(float));

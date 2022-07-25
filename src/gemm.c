@@ -1,5 +1,4 @@
 #include "gemm.h"
-#include "zw_gemm.h"
 #include "utils.h"
 #include "cuda.h"
 #include <stdlib.h>
@@ -167,7 +166,7 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 }
 
 #ifdef GPU
-
+// #include "cublas_v2.h"
 #include <math.h>
 
 // void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
@@ -177,15 +176,10 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 //         float *C_gpu, int ldc)
 // {
 //     cublasHandle_t handle = blas_handle();
-//     // cudaError_t status = cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-//     //         (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
-//     // check_error(status);
-//     cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+//     cudaError_t status = cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
 //             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
-
+//     check_error(status);
 // }
-
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,7 +230,7 @@ void time_gpu(int TA, int TB, int m, int k, int n)
     clock_t start = clock(), end;
     for(i = 0; i<iter; ++i){
         // gemm_gpu(TA,TB,m,n,k,1,a_cl,lda,b_cl,ldb,1,c_cl,n);
-        mysgemm(TA,TB,m,n,k,1,a_cl,b_cl,0,c_cl);
+        mysgemm(TA,TB,m,n,k,1,a,b,1,c);
         cudaThreadSynchronize();
     }
     double flop = ((double)m)*n*(2.*k + 2.)*iter;
@@ -272,7 +266,7 @@ void test_gpu_accuracy(int TA, int TB, int m, int k, int n)
     int i;
     //pm(m,k,b);
     // gemm_gpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c_gpu,n);
-    mysgemm(TA,TB,m,n,k,1,a,b,0,c_gpu);
+    mysgemm(TA,TB,m,n,k,1,a,b,1,c);
     //printf("GPU\n");
     //pm(m, n, c_gpu);
 
@@ -295,19 +289,15 @@ int test_gpu_blas()
 {
     /*
        test_gpu_accuracy(0,0,10,576,75); 
-
        test_gpu_accuracy(0,0,17,10,10); 
        test_gpu_accuracy(1,0,17,10,10); 
        test_gpu_accuracy(0,1,17,10,10); 
        test_gpu_accuracy(1,1,17,10,10); 
-
        test_gpu_accuracy(0,0,1000,10,100); 
        test_gpu_accuracy(1,0,1000,10,100); 
        test_gpu_accuracy(0,1,1000,10,100); 
        test_gpu_accuracy(1,1,1000,10,100); 
-
        test_gpu_accuracy(0,0,10,10,10); 
-
        time_gpu(0,0,64,2916,363); 
        time_gpu(0,0,64,2916,363); 
        time_gpu(0,0,64,2916,363); 
@@ -330,4 +320,3 @@ int test_gpu_blas()
     return 0;
 }
 #endif
-

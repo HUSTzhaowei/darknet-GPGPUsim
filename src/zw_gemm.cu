@@ -43,13 +43,13 @@ extern "C" void mysgemm(int TA, int TB, int M, int N, int K, float alpha, float 
     if(TA==1){
         //transpose array1
         dim3 threadblock(16, 16);
-        dim3 threadgrid(1 + K / threadblock.x, 1 + M / threadblock.y);
-        matrix_transpose<<<threadgrid, threadblock>>>(A, array1_t, M, K);
+        dim3 threadgrid(1 + M / threadblock.x, 1 + K / threadblock.y);
+        matrix_transpose<<<threadgrid, threadblock>>>(A, array1_t, K, M);
     }
     if(TB==1){
         dim3 threadblock(16, 16);
-        dim3 threadgrid(1 + N / threadblock.x, 1 + K / threadblock.y);
-        matrix_transpose<<<threadgrid, threadblock>>>(B, array2_t, K, N);
+        dim3 threadgrid(1 + K / threadblock.x, 1 + N / threadblock.y);
+        matrix_transpose<<<threadgrid, threadblock>>>(B, array2_t, N, K);
     }
     int cases = TA*pow(2,1) + TB*pow(2,0);
     switch(cases){

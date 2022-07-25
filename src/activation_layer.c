@@ -53,6 +53,9 @@ void forward_activation_layer_gpu(layer l, network net)
 {
     copy_gpu(l.outputs*l.batch, net.input_gpu, 1, l.output_gpu, 1);
     activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    printf("use this function\n");
+    int i;
+    for(i=0;i<l.outputs*l.batch;i++) printf("activation value is: %f\n", l.output_gpu[i]);
 }
 
 void backward_activation_layer_gpu(layer l, network net)

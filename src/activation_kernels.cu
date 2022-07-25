@@ -1,7 +1,11 @@
 #include "cuda_runtime.h"
+#include <bitset>
+#include <stdint.h>
+#include <cstring>
+#include <cmath>
 // #include "curand.h"
 // #include "cublas_v2.h"
-
+using namespace std;
 extern "C" {
 #include "activations.h"
 #include "cuda.h"
@@ -75,7 +79,76 @@ __device__ float stair_gradient_kernel(float x)
     if (floorf(x) == x) return 0;
     return 1;
 }
+// added by zw
+// extern "C" void float_to_fix(float a, std::bitset<16> &fix, bool add, bool &enable){
+//   std::bitset<32> float_bits;
+//   std::bitset<32> get_M(0x7FF800);
+//   std::bitset<32> get_E(0x7F800000);
+//   std::bitset<16> fix_bits;
+//   unsigned int k;
+//   memcpy(&k, &a, 4);
+//   float_bits = k;
+//   std::bitset<16> E;
+//   std::bitset<16> M;
+//   M = ((float_bits & get_M) >> 11).to_ulong();
+// //   cout<<"M is:"<<M<<endl;
+//   E = ((float_bits & get_E) >> 23).to_ulong();
+//   if((M!=0xfff)&&(add==true)) M = M.to_ulong() + 1;
+//   if(a==0.0){
+//      fix = 0x00;
+//      enable = true;
+//   }
+//   if((E.to_ulong() <= 131)&&(E.to_ulong() >= 124)){
+//     //enable fix-point representation
+//     switch(a>=0){
+//       case 0:
+//         fix_bits[15] = 1;
+//         break;
+//       case 1:
+//         fix_bits[15] = 0;
+//         break;
+//     }
+//     fix_bits |= M;
+//     fix_bits |= (E.to_ulong()-124)<<12;
+//     fix = fix_bits.to_ulong();
+//     enable = true;
+//   }
+//   else if(E.to_ulong() < 124){
+//       fix = 0x00;
+//      enable = true;
+//   }
+//   else enable = false;
+// }
+// extern "C" void fix_to_float(std::bitset<16> fix_value, float &a){
+//   std::bitset<32> M;
+//   std::bitset<32> E;
+//   std::bitset<32> float_bits;
+//   std::bitset<16> fix_bits(fix_value.to_ulong());
+// //   float a;
+//   if(fix_value==0x00){
+//       a = 0.00;
+//     //   return a;
+//   }
+//   unsigned int data;
+//   M = (fix_value.to_ulong()) & 0x0FFF;
+//   E = ((fix_value.to_ulong()) & 0x7000) >> 12;
+//   switch(fix_bits[15]){
+//     case 0:
+//       float_bits[31] = 0;
+//       break;
+//     case 1:
+//       float_bits[31] = 1;
+//       break;
+//   }
+//   float_bits |= M<<11;
+//   E = E.to_ulong()+124;
+//   float_bits |= E<<23;
+//   data = float_bits.to_ulong();
+//   memcpy(&a, &data, 4);
+// //   return a;
+// }
 
+//end
 __device__ float activate_kernel(float x, ACTIVATION a)
 {
     switch(a){
@@ -184,7 +257,22 @@ extern "C" void binary_activate_array_gpu(float *x, int n, int size, BINARY_ACTI
 __global__ void activate_array_kernel(float *x, int n, ACTIVATION a)
 {
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-    if(i < n) x[i] = activate_kernel(x[i], a);
+    if(i < n) 
+    {   
+        x[i] = activate_kernel(x[i], a);
+        // bool value1, value2;
+        // float out1, out2;
+        // std::bitset<16> b, d;
+        // float_to_fix<<<1,1>>>(a, d, true, value1);
+        // float_to_fix<<<1,1>>>(a, b, false, value2);
+        // fix_to_float<<<1,1>>>(b, out1);
+        // fix_to_float<<<1,1>>>(d, out2);
+        // if(value1||value2){
+        //     x[i] = fabs(out1-x[i])>fabs(out2-x[i])?out2:out1;
+        // }
+        
+        // printf("activation value is: %f\n", x[i]);
+    }
 }
 
 __global__ void gradient_array_kernel(float *x, int n, ACTIVATION a, float *delta)
@@ -196,7 +284,30 @@ __global__ void gradient_array_kernel(float *x, int n, ACTIVATION a, float *delt
 extern "C" void activate_array_gpu(float *x, int n, ACTIVATION a) 
 {
     activate_array_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, a);
+    // float *output = (float*)malloc(4*n);
+    // cudaMemcpy(output,x,4*n,cudaMemcpyDeviceToHost);
+    // int i;
+    // for(i=0;i<n;i++){
+    //     // printf("activation value is: %f\n", output[i]);
+    //     bool value1, value2;
+    //     float out1, out2;
+    //     std::bitset<16> b, d;
+    //     float_to_fix(output[i], d, true, value1);
+    //     float_to_fix(output[i], b, false, value2);
+    //     fix_to_float(b, out1);
+    //     // printf("float value1 : %f\n", out1);
+    //     fix_to_float(d, out2);
+    //     // printf("float value2 : %f\n", out2);
+    //     if(value1||value2){
+    //         // printf("enable\n");
+    //         output[i] = fabs(out1-output[i])>fabs(out2-output[i])?out2:out1;
+    //         // printf("output value: %f\n", output[i]);
+    //     }
+    // }
+    // cudaMemcpy(x,output,4*n,cudaMemcpyHostToDevice);
     check_error(cudaGetLastError());
+    // int i;
+    // for(i=0;i<n;i++) printf("activation value is: %f\n", x[0]);
 }
 
 extern "C" void gradient_array_gpu(float *x, int n, ACTIVATION a, float *delta) 
